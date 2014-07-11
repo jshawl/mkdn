@@ -8,10 +8,37 @@ set :session_secret, DB_SESSION_SECRET
 get '/' do
   session['access_token'] ||= ''
   if session['access_token'] != ''
-    @client = get_dropbox_client.account_info['display_name']
+    client = get_dropbox_client
+    @client = client.account_info['display_name']
+    path = params[:path] || '/'
+    begin
+      entry = get_dropbox_client.metadata(path)
+    rescue DropboxAuthError => e
+      session.delete(:access_token)  # An auth error means the access token is probably bad
+      logger.info "Dropbox auth error: #{e}"
+    rescue DropboxError => e
+      if e.http_response.code == '404'
+      else
+	logger.info "Dropbox API error: #{e}"
+      end
+    end
+
+    if entry['is_dir']
+      @files = entry['contents']
+    else
+      render_file(client, entry)
+    end
   end
   erb :index
 end
+
+
+
+def render_file(client, entry)
+  # Just dump out metadata hash
+  html_page "File: #{entry['path']}", "<pre>#{h entry.pretty_inspect}</pre>"
+end
+
 
 def get_auth
   redirect_uri = DB_CALLBACK
@@ -37,4 +64,9 @@ get '/callback' do
   access_token, user_id, url_state = get_auth.finish(params)
   session['access_token'] = access_token
   redirect to '/'
+end
+
+helpers do
+  include Rack::Utils
+  alias_method :h, :escape_html
 end
