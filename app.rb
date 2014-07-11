@@ -66,6 +66,11 @@ get '/callback' do
   redirect to '/'
 end
 
+get '/:path' do
+  @file = get_dropbox_client.media(params[:path])
+  erb :show
+end
+
 helpers do
   include Rack::Utils
   alias_method :h, :escape_html
