@@ -32,14 +32,6 @@ get '/' do
   erb :index
 end
 
-
-
-def render_file(client, entry)
-  # Just dump out metadata hash
-  html_page "File: #{entry['path']}", "<pre>#{h entry.pretty_inspect}</pre>"
-end
-
-
 def get_auth
   redirect_uri = DB_CALLBACK
   flow = DropboxOAuth2Flow.new( DB_APP_KEY, DB_APP_SECRET, redirect_uri, session, :dropbox_auth_csrf_token)
