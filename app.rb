@@ -17,10 +17,7 @@ get '/' do
       session.delete(:access_token)  # An auth error means the access token is probably bad
       logger.info "Dropbox auth error: #{e}"
     rescue DropboxError => e
-      if e.http_response.code == '404'
-      else
-	logger.info "Dropbox API error: #{e}"
-      end
+	logger.info "Dropbox API error: #{e}" if e.http_response.code != '404'
     end
 
     if entry['is_dir']
